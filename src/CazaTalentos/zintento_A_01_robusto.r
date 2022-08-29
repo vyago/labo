@@ -13,11 +13,6 @@ ftirar  <- function( prob, qty )
   return(  sum( runif(qty) < prob ) )
 }
 
-fstd <- function (vector)
-{
-  return (sd(vector,na.rm = TRUE))
-}
-
 
 #variables globales que usan las funciones gimnasio_xxxx
 GLOBAL_jugadores  <- c()
@@ -37,7 +32,7 @@ gimnasio_init  <- function()
 #se le pasa un vector con los IDs de los jugadores y la cantidad de tiros a realizar
 #devuelve en un vector cuantos aciertos tuvo cada jugador
 gimnasio_tirar  <- function(  pids,  pcantidad )
-{ 
+{
   GLOBAL_tiros_total  <<-  GLOBAL_tiros_total + length( pids )*pcantidad
   res  <- mapply(  ftirar, GLOBAL_jugadores[pids], pcantidad )
 
@@ -53,6 +48,19 @@ gimnasio_veredicto  <- function( pid )
                "acierto"=     as.integer( GLOBAL_jugadores[pid]==0.7) ))
 }
 
+genera_ranking <- function (paciertos) 
+{   posiciones <- integer(length(paciertos))
+    orden <- order(paciertos,decreasing=TRUE)
+    posicion = 1
+    for (j in 1:length(orden)) {
+        
+        posiciones[orden[j]] = posicion
+        posicion = posicion + 1
+
+    }
+  return  (posiciones)
+
+}
 #------------------------------------------------------------------------------
 
 #Estrategia
@@ -67,87 +75,77 @@ gimnasio_veredicto  <- function( pid )
   #el id es el numero que tiene en la espalda cada jugador
   planilla_cazatalentos  <- data.table( "id"= 1:100 )
 
-     #Ronda 1  ------------------------------------------------------
+  #Ronda 1  ------------------------------------------------------
   #tiran los 100 jugadores es decir 1:100   90  tiros libres cada uno
   ids_juegan1  <- 1:100   #los jugadores que participan en la ronda,
 
-  planilla_cazatalentos[ ids_juegan1,  tiros1 := 50 ]  #registro en la planilla que tiran 90 tiros
-
+  planilla_cazatalentos[ ids_juegan1,  tiros1 := 70 ]  #registro en la planilla que tiran 90 tiros
   #Hago que tiren
-  resultado1  <- gimnasio_tirar( ids_juegan1, 50)
+  resultado1  <- gimnasio_tirar( ids_juegan1, 70)
   planilla_cazatalentos[ ids_juegan1,  aciertos1 := resultado1 ]  #registro en la planilla
-  planilla_cazatalentos[ ids_juegan1,  media_1 := resultado1/tiros1]
+  orden <- genera_ranking(resultado1)
+  planilla_cazatalentos[ ids_juegan1,  orden1:= orden]
+
   #Ronda 2 -------------------------------------------------------
   #A la mitad mejor la hago tirar 400 tiros cada uno
   #La mediana siempre parte a un conjunto en dos partes de igual cantidad
-  quantil1  <- planilla_cazatalentos[ ids_juegan1, quantile(aciertos1, probs = 0.30,names=FALSE) ]
+  quantil1  <- planilla_cazatalentos[ ids_juegan1, quantile(aciertos1, probs = 0.40,names=FALSE) ]
   ids_juegan2  <- planilla_cazatalentos[ ids_juegan1 ][ aciertos1 > quantil1, id ]
-  
 
-  planilla_cazatalentos[ ids_juegan2,  tiros2 := 55 ]  #registro en la planilla que tiran 400 tiros
-  resultado2  <- gimnasio_tirar( ids_juegan2, 55)
+  planilla_cazatalentos[ ids_juegan2,  tiros2 := 30 ]  #registro en la planilla que tiran 400 tiros
+  resultado2  <- gimnasio_tirar( ids_juegan2, 40)
   planilla_cazatalentos[ ids_juegan2,  aciertos2 := resultado2 ]  #registro en la planilla
   planilla_cazatalentos[ ids_juegan2,  aciertos_totales_2 := aciertos1 + aciertos2]
-  planilla_cazatalentos[ ids_juegan2,  media_2 := resultado2/tiros2]
-
+  orden <- genera_ranking(resultado2)
+  planilla_cazatalentos[ ids_juegan2,  orden2:= orden]
   #Ronda 3
-  quantil2  <- planilla_cazatalentos[ ids_juegan2, quantile(aciertos_totales_2, probs = 0.35,names=FALSE) ]
+  quantil2  <- planilla_cazatalentos[ ids_juegan2, quantile(aciertos_totales_2, probs = 0.5,names=FALSE) ]
   ids_juegan3  <- planilla_cazatalentos[ ids_juegan2 ][ aciertos_totales_2 > quantil2, id ]
 
-  planilla_cazatalentos[ ids_juegan3,  tiros3 := 65 ]  #registro en la planilla que tiran 400 tiros
-  resultado3  <- gimnasio_tirar( ids_juegan3, 65)
+  planilla_cazatalentos[ ids_juegan3,  tiros3 := 50 ]  #registro en la planilla que tiran 400 tiros
+  resultado3  <- gimnasio_tirar( ids_juegan3, 50)
   planilla_cazatalentos[ ids_juegan3,  aciertos3 := resultado3 ]  #registro en la planilla
-  planilla_cazatalentos[ ids_juegan3,  aciertos_totales_3 := aciertos1 + aciertos2 + aciertos3]
-  planilla_cazatalentos[ ids_juegan3,  media_3 := resultado3/tiros3]
+  planilla_cazatalentos[ ids_juegan1,  aciertos_totales_3 := aciertos1 + aciertos2 + aciertos3]
+  orden <- genera_ranking(resultado3)
+  planilla_cazatalentos[ ids_juegan3,  orden3:= orden]
 
 
   #Ronda 4
-  quantil3  <- planilla_cazatalentos[ ids_juegan3, quantile(aciertos_totales_3, probs = 0.60,names=FALSE) ]
+  quantil3  <- planilla_cazatalentos[ ids_juegan3, quantile(aciertos_totales_3, probs = 0.5,names=FALSE) ]
   ids_juegan4  <- planilla_cazatalentos[ ids_juegan3 ][ aciertos_totales_3 >= quantil3, id ]
 
-  planilla_cazatalentos[ ids_juegan4,  tiros4 := 85 ]  #registro en la planilla que tiran 400 tiros
-  resultado4  <- gimnasio_tirar( ids_juegan4, 85)
+  planilla_cazatalentos[ ids_juegan4,  tiros4 := 70 ]  #registro en la planilla que tiran 400 tiros
+  resultado4  <- gimnasio_tirar( ids_juegan4, 70)
   planilla_cazatalentos[ ids_juegan4,  aciertos4 := resultado4 ]  #registro en la planilla.
   planilla_cazatalentos[ ids_juegan4,  aciertos_totales_4 := aciertos1+aciertos2+aciertos3+aciertos4]
-  planilla_cazatalentos[ ids_juegan4,  media_4 := resultado4/tiros4]
+  orden <- genera_ranking(resultado4)
+  planilla_cazatalentos[ ids_juegan4,  orden4:= orden]
 
-  #RONDA DE PERDEDORES
-  ##ids_perdedores <-planilla_cazatalentos[!id %in% c(ids_juegan3),id] 
-  ##planilla_cazatalentos[ ids_perdedores,  tiros_perd := 10 ]  #registro en la planilla que tiran 400 tiros
-  ##resultado_perd  <- gimnasio_tirar( ids_perdedores, 10)
-  ##planilla_cazatalentos[ ids_perdedores,  aciertos_perd := resultado_perd ]  #registro en la planilla.
-
-  ##pos_mejor_perd <-  planilla_cazatalentos[ , which.max(aciertos_perd) ]
-  ##id_mejor_perd  <-  planilla_cazatalentos[ pos_mejor_perd, id ]
-    #Ronda 5
-  quantil4  <- planilla_cazatalentos[ ids_juegan4, quantile(aciertos_totales_4, probs = 0.8,names=FALSE) ]
+  
+  #Ronda 5
+  quantil4  <- planilla_cazatalentos[ ids_juegan4, quantile(aciertos_totales_4, probs = 0.7,names=FALSE) ]
   ids_juegan5  <- planilla_cazatalentos[ ids_juegan4 ][ aciertos_totales_4 >= quantil4, id ]
-  ##ids_juegan5 <- c(ids_juegan5,id_mejor_perd)
-  tiros <- floor((14000-GLOBAL_tiros_total)/length(ids_juegan5))
-  if (tiros<=0)
-  {
-    tiros=0
-  }
-  planilla_cazatalentos[ ids_juegan5,  tiros5 := tiros ]  #registro en la planilla que tiran 400 tiros
-  resultado5  <- gimnasio_tirar( ids_juegan5, tiros)
+
+  planilla_cazatalentos[ ids_juegan5,  tiros5 := 300 ]  #registro en la planilla que tiran 400 tiros
+  resultado5  <- gimnasio_tirar( ids_juegan5, 300)
   planilla_cazatalentos[ ids_juegan5,  aciertos5 := resultado5 ]  #registro en la planilla.
   planilla_cazatalentos[ ids_juegan5,  aciertos_totales_5 := aciertos1+aciertos2+aciertos3+aciertos4+aciertos5]
-  planilla_cazatalentos[ ids_juegan5,  media_5 := resultado5/tiros5]
-  planilla_cazatalentos[ ids_juegan5,  media_prom := (media_1+media_2+media_3+media_4+media_5)/5]
-  planilla_cazatalentos[ids_juegan5,std := ((((media_1-media_prom)**2)+((media_2-media_prom)**2)+
-  ((media_3-media_prom)**2)+((media_4-media_prom)**2)+((media_5-media_prom)**2))/5)**0.5]
+  orden <- genera_ranking(resultado5)
+  planilla_cazatalentos[ ids_juegan5,  orden5:= orden]
+  planilla_cazatalentos[ids_juegan5, ranking_promedio := (orden1*0.2+orden2*0.3+orden3*0.4+orden4*0.5+orden5)/5]
 
   #Epilogo
   #El cazatalentos toma una decision, elige al que mas aciertos tuvo en la ronda2
-  pos_mejor <-  planilla_cazatalentos[ , which.max(media_prom-std) ]
+  pos_mejor <-  planilla_cazatalentos[, which.min(ranking_promedio) ]
   id_mejor  <-  planilla_cazatalentos[ pos_mejor, id ]
 
   #Finalmente, la hora de la verdadero_mejor
   #Termino el juego
-
   veredicto  <- gimnasio_veredicto( id_mejor )
   
   return( veredicto )
+  View(veredicto)
+
 #El veredicto da que la estrategia seguida por el cazatalentos fue exitosa para este caso
 #Le acerto al verdadero_mejor
 
