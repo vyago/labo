@@ -19,7 +19,7 @@ require("ggplot2")
 require("dplyr")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/YAGO/Maestría Ciencias de Datos/07-DMEYF/")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
@@ -65,7 +65,7 @@ modelo <- rpart(clase_binaria ~ .,
                 cp = -1,
                 minsplit = 20,
                 minbucket = 10,
-                maxdepth = 5)
+                maxdepth = 10)
 
 calcular_ganancia(modelo, dtest)
 
@@ -284,6 +284,8 @@ calcular_ganancia(modelo_cq_4, dtest)
 ## Actividad: Para mi semilla, esta estrategia es buena, hacer un experimento
 ## donde no quede al azar este resultado.
 
+## TRANSFORMACIONES A MANO SON MÁS RECOMENDADAS
+
 ## ---------------------------
 ## Step 8: Un poco de R, como procesar multiples variables con una técnica 
 ## ---------------------------
@@ -363,13 +365,15 @@ modelo6 <- rpart(formula2,
                     maxdepth = 5)
 
 print(modelo6$variable.importance)
+### CANTIDAD DE SERVICIOS ACTIVOS
+### LIMITES DE TARJETAS
 
 # Importante: Que una modelo tenga otras variables importantes no implicar que
 # sea mejor, ni peor. Eso se debe evaluar con los experimentos
 
 ##
 ## TAREA: Multiples experimentos. Un script por cada uno que debe incluir:
-## - Feature engineering correctamente aplicado
+## - Feature engineering correctamente aplicado. NUEVAS VARIABLES. 
 ## - Opt Bayesiana para el dataset que se incluya nuevas variables
 ## - Scorear en los datos de marzo y subir a kaggle el score.
 
