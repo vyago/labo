@@ -72,14 +72,6 @@ ganancia <- function(probabilidades, clase) {
   )
 }
 
-# Función para tomar un muestra dejando todos los elementos de la clase BAJA+2
-tomar_muestra <- function(datos, resto = 10000) {
-      t <- datos$clase_binaria == "evento"
-      r <- rep(FALSE, length(datos$clase_binaria))
-      r[!t][sample.int(resto, n = (length(t) - sum(t)))] <- TRUE
-      t | r
-}
-
 
 # Una función auxiliar para los experimentos
 experimento_rpart <- function(ds, semillas, cp = 0, ms = 20, mb = 1, md = 10) {
@@ -90,7 +82,6 @@ experimento_rpart <- function(ds, semillas, cp = 0, ms = 20, mb = 1, md = 10) {
         list = FALSE)
     train  <-  ds[in_training, ]
     test   <-  ds[-in_training, ]
-    #train_sample <- tomar_muestra(train)
     r <- modelo_rpart(train, test, 
                     cp = cp, ms = ms, mb = mb, md = md)
     ganancia <- c(ganancia, r)
@@ -122,7 +113,7 @@ obj_fun <- makeSingleObjectiveFunction(
     makeNumericParam("minbucket",  lower = 0L, upper = 1L)
     # makeNumericParam <- para parámetros continuos
   ),
-  # noisy = TRUE,
+  noisy = TRUE,
   has.simple.signature = FALSE
 )
 
@@ -132,8 +123,6 @@ ctrl <- setMBOControlInfill(
   ctrl,
   crit = makeMBOInfillCritEI(),
   opt = "focussearch",
-  # sacar parámetro opt.focussearch.points en próximas ejecuciones
-  #opt.focussearch.points = 20
 )
 
 lrn <- makeMBOLearner(ctrl, obj_fun)

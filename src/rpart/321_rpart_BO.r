@@ -5,13 +5,16 @@ rm( list=ls() )  #remove all objects
 gc()             #garbage collection
 
 require("data.table")
+#install.packages("rlist")
 require("rlist")
 
 require("rpart")
 require("parallel")
 
 #paquetes necesarios para la Bayesian Optimization
+#install.packages("DiceKriging")
 require("DiceKriging")
+
 require("mlrMBO")
 
 
@@ -73,7 +76,7 @@ particionar  <- function( data, division, agrupa="", campo="fold", start=1, seed
 ArbolSimple  <- function( fold_test, data, param )
 {
   #genero el modelo
-  modelo  <- rpart("clase_ternaria ~ .", 
+  modelo  <- rpart("clase_binaria ~ .", 
                    data= data[ fold != fold_test, ],  #entreno en todo MENOS el fold_test que uso para testing
                    xval= 0,
                    control= param )
@@ -83,11 +86,11 @@ ArbolSimple  <- function( fold_test, data, param )
                           data[ fold==fold_test, ],  #aplico el modelo sobre los datos de testing
                           type= "prob")   #quiero que me devuelva probabilidades
 
-  prob_baja2  <- prediccion[, "BAJA+2"]  #esta es la probabilidad de baja
+  prob_baja2  <- prediccion[, "evento"]  #esta es la probabilidad de baja
 
   #calculo la ganancia
   ganancia_testing  <- data[ fold==fold_test ][ prob_baja2 > 1/60,  
-                                                sum( ifelse( clase_ternaria=="BAJA+2", 59000, -1000 ) )] 
+                                                sum( ifelse( clase_binaria=="evento", 59000, -1000 ) )] 
 
   return( ganancia_testing )  #esta es la ganancia sobre el fold de testing, NO esta normalizada
 }
@@ -125,7 +128,7 @@ EstimarGanancia  <- function( x )
    ganancia  <- ArbolesCrossValidation( dataset,
                                         param= x, #los hiperparametros del arbol
                                         qfolds= xval_folds,  #la cantidad de folds
-                                        pagrupa= "clase_ternaria",
+                                        pagrupa= "clase_binaria",
                                         semilla= ksemilla_azar )
 
    #logueo 
@@ -140,10 +143,10 @@ EstimarGanancia  <- function( x )
 #------------------------------------------------------------------------------
 #Aqui empieza el programa
 
-setwd( "D:\\gdrive\\UBA2022\\" )
+setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")
 
 #cargo el dataset
-dataset  <- fread("./datasets/competencia1_2022.csv")   #donde entreno
+dataset  <- fread("./exp/FE/001_FE_RANKING.csv")   #donde entreno
 
 
 #creo la carpeta donde va el experimento
