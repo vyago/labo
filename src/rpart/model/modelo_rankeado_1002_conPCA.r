@@ -68,8 +68,6 @@ dapply[,campo8:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mp
 
 
 
-
-
 # corrijo manualmente el drifting de  Visa_fultimo_cierre
  dapply[ Visa_fultimo_cierre== 1, Visa_fultimo_cierre :=  4 ]
  dapply[ Visa_fultimo_cierre== 7, Visa_fultimo_cierre := 11 ]
@@ -95,6 +93,7 @@ nulos <- c("Master_Finiciomora", "Master_mconsumospesos", "Master_mconsumosdolar
 "Master_madelantopesos", "Master_madelantodolares", "Master_mpagospesos", 
 "Master_mpagosdolares", "Master_mconsumototal", "Master_cconsumos", 
 "Master_cadelantosefectivo", "Visa_Finiciomora")
+
 
 
 var_nuevas <- c("campo1","campo2","campo3","campo4","campo5","campo6","campo7","campo8")
@@ -154,6 +153,8 @@ modelo <- rpart(formula,
         minsplit=  530,   
         minbucket=  265,   
         maxdepth=     10 )
+
+variable_importance<- names(modelo$variable.importance)
 
 #aplico el modelo a los datos nuevos
 prediccion  <- predict( object= modelo,

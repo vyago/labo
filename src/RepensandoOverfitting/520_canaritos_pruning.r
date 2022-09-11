@@ -32,23 +32,47 @@ dtrain[, clase_binaria2 := ifelse(
                             )]
 dtrain[,clase_ternaria:=NULL]
 
-var_pesos <- variables_modelo[variables_modelo %like% "^m"] 
-
+## Ranking de variables pesificadas
+variables_iniciales <- names(dataset)
+var_pesos <- variables_iniciales[variables_iniciales %like% "^m"] 
+seleccion_variables <- variables_iniciales[!variables_iniciales  %in% var_pesos]
 
 prefix <- "r_"
 r_var_pesos <- c()
 for (var in var_pesos) {
-    dtrain[, (paste(prefix, var, sep = "")) := ntile(get(var), 10)]
-    dapply[, (paste(prefix, var, sep = "")) := ntile(get(var), 10)]
+    dataset[, (paste(prefix, var, sep = "")) := ntile(get(var), 20)]
+    
     r_var_pesos <- c(r_var_pesos,paste(prefix, var, sep = ""))
 }
 
-dtrain <- dtrain[,!..var_pesos]
+variables_modelo <- c(r_var_pesos,seleccion_variables)
 
+
+
+##Features con ranking
+dtrain[,campo1:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo<5 & r_mprestamos_personales <17)]
+dtrain[,campo2:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo<5 & r_mprestamos_personales >=17)]
+dtrain[,campo3:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo>=5 & Visa_msaldototal <7919.8)]
+dtrain[,campo4:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo>=5 & Visa_msaldototal >=7919.8)]
+dtrain[,campo5:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & cpayroll_trx <1)]
+dtrain[,campo6:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & cpayroll_trx >=1)]
+dtrain[,campo7:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen <6)]
+dtrain[,campo8:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen >=6)]
+
+dapply[,campo1:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo<5 & r_mprestamos_personales <17)]
+dapply[,campo2:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo<5 & r_mprestamos_personales >=17)]
+dapply[,campo3:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo>=5 & Visa_msaldototal <7919.8)]
+dapply[,campo4:=as.integer(r_mcaja_ahorro<3 & r_mtarjeta_visa_consumo>=5 & Visa_msaldototal >=7919.8)]
+dapply[,campo5:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & cpayroll_trx <1)]
+dapply[,campo6:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & cpayroll_trx >=1)]
+dapply[,campo7:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen <6)]
+dapply[,campo8:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen >=6)]
+
+dtrain <- dtrain[,..variables_modelo]
 
 #Primero  veo como quedan mis arboles
 modelo_original <- rpart(
-    formula= "clase_binaria2 ~ . -numero_de_cliente -ctrx_quarter",
+    formula= "clase_binaria2 ~ .r",
     data= dtrain,
     model= TRUE,
     xval= 0,

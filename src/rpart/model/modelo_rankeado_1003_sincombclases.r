@@ -25,9 +25,9 @@ dapply <- dataset[foto_mes == 202103]
 
 ## Clases BAJAS+1 y BAJA+2 combinadas
 train[, clase_binaria := ifelse(
-                            clase_ternaria == "CONTINUA",
-                                "noevento",
-                                "evento"
+                            clase_ternaria == "BAJA+2",
+                                "evento",
+                                "noevento"
                             )]
 train[,clase_ternaria:=NULL]
 
@@ -65,7 +65,10 @@ dapply[,campo6:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & cpay
 dapply[,campo7:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen <6)]
 dapply[,campo8:=as.integer(r_mcaja_ahorro>=3 & r_mtarjeta_visa_consumo>=5 & r_mpasivos_margen >=6)]
 
-
+var_nuevas <- c("campo1","campo2","campo3","campo4","campo5","campo6","campo7","campo8")
+variables_modelo <- c(r_var_pesos,seleccion_variables,var_nuevas)
+campos <- paste(variables_modelo, collapse = " + ")
+formula <- paste0( "clase_binaria ~", campos )
 
 
 
@@ -97,11 +100,7 @@ nulos <- c("Master_Finiciomora", "Master_mconsumospesos", "Master_mconsumosdolar
 "Master_cadelantosefectivo", "Visa_Finiciomora")
 
 
-var_nuevas <- c("campo1","campo2","campo3","campo4","campo5","campo6","campo7","campo8")
-variables_modelo <- c(r_var_pesos,seleccion_variables,var_nuevas)
-variables_modelo <- variables_modelo[!variables_modelo %in% nulos]
-campos <- paste(variables_modelo, collapse = " + ")
-formula <- paste0( "clase_binaria ~", campos )
+
 
 
 
@@ -112,7 +111,7 @@ formula <- paste0( "clase_binaria ~", campos )
 calcular_ganancia <- function(modelo, test) {
     pred_testing <- predict(modelo, test, type = "prob")
     return(sum(
-        (pred_testing[, "evento"] >= 1/20) * ifelse(test$clase_binaria == "evento",
+        (pred_testing[, "evento"] >= 1/40) * ifelse(test$clase_binaria == "evento",
                                          78000, -2000) / 0.3
     ))
 }
@@ -127,19 +126,18 @@ modelo_arbol <- function(ds,formula,semilla) {
     dtest   <-  ds[-in_training, ]
 
     modelo <- rpart(formula,
-        data=dtrain,
+        data=train,
         xval= 0,
-        cp= -0.1297,
-        minsplit=  171,   
-        minbucket=  20,   
-        maxdepth=     5 )
+        cp= -0.56,
+        minsplit=  580,   
+        minbucket=  161,   
+        maxdepth=     16 )
 
     gan <- calcular_ganancia(modelo, dtest)
     return (gan)
 }
 
 ganancia <- c()
-
 for (s in semillas){
 
     gan_mod <-  modelo_arbol(train,formula,s)
@@ -150,10 +148,10 @@ ganancia_final <- mean(ganancia)
 modelo <- rpart(formula,
         data=train,
         xval= 0,
-        cp= -0.55,
-        minsplit=  530,   
-        minbucket=  265,   
-        maxdepth=     10 )
+        cp= -0.56,
+        minsplit=  580,   
+        minbucket=  161,   
+        maxdepth=     16 )
 
 #aplico el modelo a los datos nuevos
 prediccion  <- predict( object= modelo,
@@ -167,16 +165,16 @@ prediccion  <- predict( object= modelo,
 dapply[ , prob_baja2 := prediccion[, "evento"] ]
 
 #solo le envio estimulo a los registros con probabilidad de BAJA+2 mayor  a  1/40
-dapply[ , Predicted := as.numeric( prob_baja2 > 1/20) ]
+dapply[ , Predicted := as.numeric( prob_baja2 > 1/40) ]
 
 View(dapply[,.N,by=Predicted])
 #genero el archivo para Kaggle
 #primero creo la carpeta donde va el experimento
 #dir.create( "./exp/" )
-dir.create( "./exp/KA1002" )
+dir.create( "./exp/KA1003" )
 
 fwrite( dapply[ , list(numero_de_cliente, Predicted) ], #solo los campos para Kaggle
-        file= "./exp/KA1002/K1002_002.csv",
+        file= "./exp/KA1003/K1002_001.csv",
         sep=  "," )
 
 a<-modelo$variable.importance

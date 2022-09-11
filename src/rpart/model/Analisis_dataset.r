@@ -55,7 +55,7 @@ train[, clase_binaria := ifelse(
                                 "noevento",
                                 "evento"
                             )]
-
+train[,.N,by=clase_binaria]
 
 resumen <- summary(train)
 
