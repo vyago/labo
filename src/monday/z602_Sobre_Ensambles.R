@@ -51,10 +51,10 @@ setwd("/home/aleb/dmeyf2022")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
-# Cargamos el dataset y nos quedamos solo con el 202101
-dataset <- fread("./datasets/competencia1_2022.csv")
+# Cargamos los datasets y nos quedamos solo con 202101 y 202103
+dataset <- fread("./datasets/competencia2_2022.csv.gz")
 enero <- dataset[foto_mes == 202101]
-rm(dataset)
+marzo <- dataset[foto_mes == 202103]
 
 # Importante que la clase sea factor
 enero[, clase_binaria1 := factor(ifelse(
@@ -135,7 +135,7 @@ dtrain$pollito <- runif(nrow(dtrain))
 modelo_rf_2 <- ranger(clase_binaria1 ~ ., data = dtrain,
                   probability = TRUE,
                   num.trees = 150,
-                  min.node.size = 10,
+                  min.node.size = 10, # <---------
                   mtry = n_variables,
                   splitrule = "gini",
                   importance = "impurity",
@@ -146,8 +146,30 @@ importancia2 <- as.data.table(modelo_rf_2$variable.importance,
 colnames(importancia2) <- c("variable", "importancia")
 setorder(importancia2, -importancia)
 importancia2
+which(importancia2$variable == "pollito")
 
 ## Active learning o a llorar a la iglesia.
+
+## ---------------------------
+## Step 5.1: Hablando de los Extra Trees
+## ---------------------------
+
+modelo_rf_3 <- ranger(clase_binaria1 ~ ., data = dtrain,
+                  probability = TRUE,
+                  num.trees = 150,
+                  min.node.size = 1000, # <---------
+                  mtry = n_variables,
+                  splitrule = "extratrees", # <---------
+                  num.random.splits = 10, # <---------
+                  importance = "impurity",
+                  verbose = TRUE)
+
+importancia3 <- as.data.table(modelo_rf_3$variable.importance,
+                    keep.rownames = TRUE)
+colnames(importancia3) <- c("variable", "importancia")
+setorder(importancia3, -importancia)
+importancia3
+which(importancia3$variable == "pollito")
 
 ## ---------------------------
 ## Step 6: Boosting, la navaja suiza de los modelos - Conceptos
@@ -174,11 +196,9 @@ importancia2
 ## ---------------------------
 
 # Cargamos todo para tener un código limpio
-dataset <- fread("./datasets/competencia1_2022.csv")
+dataset <- fread("./datasets/competencia2_2022.csv.gz")
 enero <- dataset[foto_mes == 202101]
 marzo <- dataset[foto_mes == 202103]
-kaggle <- fread("./datasets/kaggle_competencia1_realidad.csv")
-marzo <- marzo[kaggle, on = .(numero_de_cliente)]
 rm(dataset)
 
 clase_binaria <- ifelse(enero$clase_ternaria == "BAJA+2", 1, 0)
@@ -194,47 +214,62 @@ ganancia_lgb <- function(probs, datos) {
 }
 
 set.seed(semillas[1])
+# LightGBM, al igual que XGB traen su implementación del CV
+# Los parámetros los iremos viendo en profundidad la siguiente clase.
 model_lgbm_cv <- lgb.cv(data = dtrain,
          eval = ganancia_lgb,
          stratified = TRUE,
          nfold = 5,
-         param = list( objective= "binary",
+         param = list(objective = "binary",
                        max_bin = 15,
                        min_data_in_leaf = 4000,
                        learning_rate = 0.05
                        )
       )
 
+# Mejor iteración
 model_lgbm_cv$best_iter
-unlist(model_lgbm_cv$record_evals$valid$ganancia$eval)[ model_lgbm_cv$best_iter]
 
-model_lgm <- lightgbm(data = ds_train,
-            nrounds = model_lgbm_cv$best_iter,
+# Ganancia de la mejor iteración
+unlist(model_lgbm_cv$record_evals$valid$ganancia$eval)[model_lgbm_cv$best_iter]
+
+# Una vez que elegimos los parámetros tenemos que entrenar con todos.
+model_lgm <- lightgbm(data = dtrain,
+            nrounds = model_lgbm_cv$best_iter, # <--- OJO! Double Descent alert
             params = list(objective = "binary",
                             max_bin = 15,
                             min_data_in_leaf = 4000,
                             learning_rate = 0.05),
              verbose = -1)
 
-
+# También tiene su importancia de variables
 lgb.importance(model_lgm, percentage = TRUE)
 
 ## ---------------------------
-## Step 8: En kaggle
+## Step 8: En Marzo
 ## ---------------------------
 
-marzo$pred_marzo <- predict(model_lgm, data.matrix(marzo[,1:154]))
+marzo$pred <- predict(model_lgm, data.matrix(marzo[, 1:154]))
 
 # TOTAL
-sum((marzo$pred_marzo > 0.025) *
-            ifelse(marzo$Predicted == 1, 78000, -2000))
+sum((marzo$pred > 0.025) *
+            ifelse(marzo$clase_ternaria == "BAJA+2", 78000, -2000))
 
-# Público
-sum((marzo$pred_marzo > 0.025 & marzo$Usage == "Public") *
-                    ifelse(marzo$Predicted == 1, 78000, -2000)) / 0.3
+# Sobre 100 LB
+leaderboad <- data.table()
+set.seed(semillas[1])
+for (i in 1:100) {
+  split <- caret::createDataPartition(marzo$clase_ternaria,
+                     p = 0.70, list = FALSE)
+  privado <- sum((marzo$pred[split] > 0.025) *
+        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.7
+  publico <- sum((marzo$pred[-split] > 0.025) *
+        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.3
+  leaderboad <- rbindlist(list(leaderboad,
+                data.table(privado = privado, publico = publico)))
+}
 
-# Privado
-sum((marzo$pred_marzo > 0.025 & marzo$Usage == "Private") *
-                    ifelse(marzo$Predicted == 1, 78000, -2000)) / 0.7
+# Comparar con la salida del árbol
+summary(leaderboad)
 
 ## Bienvenido al mundo de los ensambles

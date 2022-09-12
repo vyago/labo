@@ -22,16 +22,13 @@ setwd("/home/aleb/dmeyf2022")
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
-# Cargamos el dataset y nos quedamos solo con el 202101
-dataset <- fread("./datasets/competencia1_2022.csv")
+# Cargamos los datasets y nos quedamos solo con 202101 y 202103
+dataset <- fread("./datasets/competencia2_2022.csv.gz")
 enero <- dataset[foto_mes == 202101]
 marzo <- dataset[foto_mes == 202103]
 
 # Borramos el dataset para liberar memoria.
 rm(dataset)
-
-# Cargamos el privado de Kaggle
-kaggle <- fread("./datasets/kaggle_competencia1_realidad.csv")
 
 # Armamos diferentes clases binarias:
 # Sólo es evento las clase BAJA+2
@@ -49,37 +46,16 @@ modelo <- rpart(clase_binaria1 ~ . - clase_ternaria,
                 control = parametros)
 
 ## ---------------------------
-## Step 2: Aplicando ese modelo a los datos de Kaggle
+## Step 2: Aplicando ese modelo a los datos de Marzo
 ## ---------------------------
 
 # Predigo la probabilidad de marzo.
-marzo$pred_marzo <- predict(modelo, marzo, type = "prob")[, "evento"]
-
-# Determino a quienes voy a estimular usando un el punto de corte 0.025
-marzo[, envio := ifelse(pred_marzo > 0.025, 1, 0)]
-
-# Junto las variables de kaggle a marzo
-marzo <- marzo[kaggle, on = .(numero_de_cliente)]
-
-# Calculamos las ganancias en el total, en el público y en el privado
+marzo$pred <- predict(modelo, marzo, type = "prob")[, "evento"]
 
 # Marzo entero
-marzo[, sum(ifelse(envio == 1,
-                ifelse(Predicted == 1, 78000, -2000)
+marzo[, sum(ifelse(pred > 0.025,
+                ifelse(clase_ternaria == "BAJA+2", 78000, -2000)
             , 0))]
-
-# Solo público, con correción del 0.3
-marzo[, sum(ifelse(envio == 1 & Usage == "Public",
-                ifelse(Predicted == 1, 78000, -2000)
-            , 0))] / 0.3
-
-# Solo privado, con correción del 0.7
-marzo[, sum(ifelse(envio == 1 & Usage == "Private",
-                ifelse(Predicted == 1, 78000, -2000)
-            , 0))] / 0.7
-
-## Pregunta
-## ¿Esperaba esas diferencias entre leaderboards?
 
 ## ---------------------------
 ## Step 3: Creando 100 leaderboards
@@ -88,11 +64,12 @@ marzo[, sum(ifelse(envio == 1 & Usage == "Private",
 leaderboad <- data.table()
 set.seed(semillas[1])
 for (i in 1:100) {
-  split <- caret::createDataPartition(marzo$Predicted, p = 0.70, list = FALSE)
-  privado <- sum((marzo$pred_marzo[split] > 0.025) *
-                    ifelse(marzo$Predicted[split] == 1, 78000, -2000)) / 0.7
-  publico <- sum((marzo$pred_marzo[-split] > 0.025) *
-                    ifelse(marzo$Predicted[-split] == 1, 78000, -2000)) / 0.3
+  split <- caret::createDataPartition(marzo$clase_ternaria,
+                     p = 0.70, list = FALSE)
+  privado <- sum((marzo$pred[split] > 0.025) *
+        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.7
+  publico <- sum((marzo$pred[-split] > 0.025) *
+        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.3
   leaderboad <- rbindlist(list(leaderboad,
                 data.table(privado = privado, publico = publico)))
 }
@@ -101,6 +78,9 @@ leaderboad$r_privado <- frank(leaderboad$privado)
 leaderboad$r_publico <- frank(leaderboad$publico)
 
 leaderboad
+
+# Guardar la salida para comparar más adelante
+summary(leaderboad)
 
 ## Preguntas
 ## ¿Qué conclusiones saca al ver los valores?
@@ -128,23 +108,12 @@ modelo2 <- rpart(clase_binaria1 ~ . - clase_ternaria,
                 xval = 0,
                 control = parametros2)
 
-marzo$pred2_marzo <- predict(modelo2, marzo, type = "prob")[, "evento"]
+marzo$pred2 <- predict(modelo2, marzo, type = "prob")[, "evento"]
 
 # Marzo entero
-marzo[, sum(ifelse(pred2_marzo >= 0.025,
-                ifelse(Predicted == 1, 78000, -2000)
+marzo[, sum(ifelse(pred2 >= 0.025,
+                ifelse(clase_ternaria == "BAJA+2", 78000, -2000)
             , 0))]
-
-# Solo público, con correción del 0.3
-marzo[, sum(ifelse(pred2_marzo >= 0.025 & Usage == "Public",
-                ifelse(Predicted == 1, 78000, -2000)
-            , 0))] / 0.3
-
-# Solo privado, con correción del 0.7
-marzo[, sum(ifelse(pred2_marzo >= 0.025 & Usage == "Private",
-                ifelse(Predicted == 1, 78000, -2000)
-            , 0))] / 0.7
-
 
 ## Preguntas
 ## Abriendo la caja de pandora, ¿Cúal de los dos modelos era mejor?
@@ -156,15 +125,18 @@ marzo[, sum(ifelse(pred2_marzo >= 0.025 & Usage == "Private",
 leaderboad2 <- data.table()
 set.seed(semillas[1])
 for (i in 1:100) {
-  split <- caret::createDataPartition(marzo$Predicted, p = 0.70, list = FALSE)
-  privado <- sum((marzo$pred_marzo[split] > 0.025) *
-                    ifelse(marzo$Predicted[split] == 1, 78000, -2000)) / 0.7
-  publico <- sum((marzo$pred_marzo[-split] > 0.025) *
-                    ifelse(marzo$Predicted[-split] == 1, 78000, -2000)) / 0.3
-  privado2 <- sum((marzo$pred2_marzo[split] > 0.025) *
-                    ifelse(marzo$Predicted[split] == 1, 78000, -2000)) / 0.7
-  publico2 <- sum((marzo$pred2_marzo[-split] > 0.025) *
-                    ifelse(marzo$Predicted[-split] == 1, 78000, -2000)) / 0.3
+  split <- caret::createDataPartition(marzo$clase_ternaria,
+                     p = 0.70, list = FALSE)
+
+  privado <- sum((marzo$pred[split] > 0.025) *
+        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.7
+  publico <- sum((marzo$pred[-split] > 0.025) *
+        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.3
+
+  privado2 <- sum((marzo$pred2[split] > 0.025) *
+        ifelse(marzo$clase_ternaria[split] == "BAJA+2", 78000, -2000)) / 0.7
+  publico2 <- sum((marzo$pred2[-split] > 0.025) *
+        ifelse(marzo$clase_ternaria[-split] == "BAJA+2", 78000, -2000)) / 0.3
 
   leaderboad2 <- rbindlist(list(leaderboad2,
                 data.table(privado = privado,
@@ -191,4 +163,3 @@ df3 <- melt(leaderboad2, measure.vars =  c("privado", "privado2"))
 ggplot(df3, aes(x = value, color = variable)) + geom_density()
 
 ## Active learning ... entender que pasa.
-
