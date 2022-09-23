@@ -189,7 +189,7 @@ EstimarGanancia_lightgbm  <- function( x )
 #Aqui empieza el programa
 
 #Aqui se debe poner la carpeta de la computadora local
-setwd("~/buckets/b1/")   #Establezco el Working Directory
+setwd("C:\\Users\\vyago\\Desktop\\Maestría Ciencias de Datos\\07-DMEYF")   #Establezco el Working Directory
 
 #cargo el dataset donde voy a entrenar el modelo
 dataset  <- fread( PARAM$input$dataset )
