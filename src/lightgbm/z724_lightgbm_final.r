@@ -16,24 +16,24 @@ require("lightgbm")
 #defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM <- list()
-PARAM$experimento  <- "KA7240"
+PARAM$experimento  <- "KA7231"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
 PARAM$input$future        <- c( 202105 )
 
 PARAM$finalmodel$max_bin           <-     31
-PARAM$finalmodel$learning_rate     <-      0.0280015981   #0.0142501265
-PARAM$finalmodel$num_iterations    <-    328  #615
-PARAM$finalmodel$num_leaves        <-   1015  #784
-PARAM$finalmodel$min_data_in_leaf  <-   5542  #5628
-PARAM$finalmodel$feature_fraction  <-      0.7832319551  #0.8382482539
+PARAM$finalmodel$learning_rate     <-      0.024673   #0.0142501265
+PARAM$finalmodel$num_iterations    <-    343  #615
+#PARAM$finalmodel$num_leaves        <-   1015  #784
+PARAM$finalmodel$min_data_in_leaf  <-   5225  #5628
+PARAM$finalmodel$feature_fraction  <-   0.5889  #0.8382482539
 PARAM$finalmodel$semilla           <- 102191
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #Aqui empieza el programa
-setwd( "~/buckets/b1" )
+setwd( "C:\\Users\\vyago\\Desktop\\Maestría Ciencias de Datos\\07-DMEYF" )
 
 #cargo el dataset donde voy a entrenar
 dataset  <- fread(PARAM$input$dataset, stringsAsFactors= TRUE)
@@ -79,7 +79,7 @@ modelo  <- lgb.train( data= dtrain,
                                    max_bin=            PARAM$finalmodel$max_bin,
                                    learning_rate=      PARAM$finalmodel$learning_rate,
                                    num_iterations=     PARAM$finalmodel$num_iterations,
-                                   num_leaves=         PARAM$finalmodel$num_leaves,
+                                   #num_leaves=         PARAM$finalmodel$num_leaves,
                                    min_data_in_leaf=   PARAM$finalmodel$min_data_in_leaf,
                                    feature_fraction=   PARAM$finalmodel$feature_fraction,
                                    seed=               PARAM$finalmodel$semilla
