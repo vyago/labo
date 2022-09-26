@@ -35,28 +35,30 @@ hs <- makeParamSet(
          makeNumericParam("learning_rate",    lower=    0.005, upper=    0.3),
          makeNumericParam("feature_fraction", lower=    0.2  , upper=    1.0),
          makeIntegerParam("min_data_in_leaf", lower=    0L   , upper=  8000L),
-         makeIntegerParam("num_leaves",       lower=   16L   , upper=  1024L),
+         makeIntegerParam("num_leaves",       lower=   16L   , upper=  2024L),
          makeIntegerParam("envios",           lower= 5000L   , upper= 15000L)
+        # makeIntegerParam("max_bin", lower=   31L   , upper=  255L),
+         #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
         )
 
 #defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7231"
+PARAM$experimento  <- "HT7233"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
 
 PARAM$trainingstrategy$undersampling  <-  1.0   # un undersampling de 0.1  toma solo el 10% de los CONTINUA
-PARAM$trainingstrategy$semilla_azar   <- 102191  #Aqui poner la propia semilla
+PARAM$trainingstrategy$semilla_azar   <- 444583  #Aqui poner la propia semilla
 
-PARAM$hyperparametertuning$iteraciones <- 100
+PARAM$hyperparametertuning$iteraciones <- 400
 PARAM$hyperparametertuning$xval_folds  <- 5
 PARAM$hyperparametertuning$POS_ganancia  <- 78000
 PARAM$hyperparametertuning$NEG_ganancia  <- -2000
 
-PARAM$hyperparametertuning$semilla_azar  <- 102191  #Aqui poner la propia semilla, PUEDE ser distinta a la de trainingstrategy
+PARAM$hyperparametertuning$semilla_azar  <- 444583  #Aqui poner la propia semilla, PUEDE ser distinta a la de trainingstrategy
 
 #------------------------------------------------------------------------------
 #graba a un archivo los componentes de lista
@@ -120,6 +122,7 @@ EstimarGanancia_lightgbm  <- function( x )
 
   param_basicos  <- list( objective= "binary",
                           metric= "custom",
+                          boosting = "goss",
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
@@ -134,8 +137,8 @@ EstimarGanancia_lightgbm  <- function( x )
                           seed= PARAM$hyperparametertuning$semilla_azar
                         )
 
-  #el parametro discolo, que depende de otro
-  param_variable  <- list(  early_stopping_rounds= as.integer(50 + 5/x$learning_rate) )
+  #el parametro discolo, que depende de otro7
+  param_variable  <- list(  early_stopping_rounds= as.integer(50+5/5*x$learning_rate) )
 
   param_completo  <- c( param_basicos, param_variable, x )
 
@@ -189,7 +192,8 @@ EstimarGanancia_lightgbm  <- function( x )
 #Aqui empieza el programa
 
 #Aqui se debe poner la carpeta de la computadora local
-setwd("~/buckets/b1/")   #Establezco el Working Directory
+#setwd("~/buckets/b1/")   #Establezco el Working Directory
+setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
 
 #cargo el dataset donde voy a entrenar el modelo
 dataset  <- fread( PARAM$input$dataset )
