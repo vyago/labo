@@ -32,12 +32,12 @@ options(error = function() {
 
 #Aqui se cargan los hiperparametros
 hs <- makeParamSet( 
-         makeNumericParam("learning_rate",    lower=    0.005, upper=    0.3),
+         makeNumericParam("learning_rate",    lower=    0.005, upper=    0.1),
          makeNumericParam("feature_fraction", lower=    0.2  , upper=    1.0),
          makeIntegerParam("min_data_in_leaf", lower=    0L   , upper=  8000L),
          makeIntegerParam("num_leaves",       lower=   16L   , upper=  2024L),
-         makeIntegerParam("envios",           lower= 5000L   , upper= 15000L)
-        # makeIntegerParam("max_bin", lower=   31L   , upper=  255L),
+         makeIntegerParam("envios",           lower= 5000L   , upper= 15000L),
+         makeIntegerParam("max_bin", lower=   31L   , upper=  255L)
          #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
         )
 
@@ -45,7 +45,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7233"
+PARAM$experimento  <- "HT7234"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -122,7 +122,6 @@ EstimarGanancia_lightgbm  <- function( x )
 
   param_basicos  <- list( objective= "binary",
                           metric= "custom",
-                          boosting = "goss",
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
@@ -138,7 +137,7 @@ EstimarGanancia_lightgbm  <- function( x )
                         )
 
   #el parametro discolo, que depende de otro7
-  param_variable  <- list(  early_stopping_rounds= as.integer(50+5/5*x$learning_rate) )
+  param_variable  <- list(  early_stopping_rounds= as.integer(50+5/x$learning_rate) )
 
   param_completo  <- c( param_basicos, param_variable, x )
 
