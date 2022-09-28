@@ -45,7 +45,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7234"
+PARAM$experimento  <- "HT7235"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -130,7 +130,7 @@ EstimarGanancia_lightgbm  <- function( x )
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
                           lambda_l1= 0.0,         #por ahora, lo dejo fijo
                           lambda_l2= 0.0,         #por ahora, lo dejo fijo
-                          max_bin= 31,            #por ahora, lo dejo fijo
+                          #max_bin= 31,            #por ahora, lo dejo fijo
                           num_iterations= 9999,   #un numero muy grande, lo limita early_stopping_rounds
                           force_row_wise= TRUE,   #para que los alumnos no se atemoricen con tantos warning
                           seed= PARAM$hyperparametertuning$semilla_azar
@@ -191,8 +191,8 @@ EstimarGanancia_lightgbm  <- function( x )
 #Aqui empieza el programa
 
 #Aqui se debe poner la carpeta de la computadora local
-#setwd("~/buckets/b1/")   #Establezco el Working Directory
-setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
+setwd("~/buckets/b1/")   #Establezco el Working Directory
+#setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
 
 #cargo el dataset donde voy a entrenar el modelo
 dataset  <- fread( PARAM$input$dataset )
