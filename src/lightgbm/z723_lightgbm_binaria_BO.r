@@ -45,7 +45,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7236"
+PARAM$experimento  <- "HT7237"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -129,8 +129,7 @@ EstimarGanancia_lightgbm  <- function( x )
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
                           lambda_l1= 0.0,         #por ahora, lo dejo fijo
-                          lambda_l2= 0.0,         #por ahora, lo dejo fijo
-                          #max_bin= 31,            #por ahora, lo dejo fijo
+                          lambda_l2= 0.0,            #por ahora, lo dejo fijo
                           num_iterations= 9999,   #un numero muy grande, lo limita early_stopping_rounds
                           force_row_wise= TRUE,   #para que los alumnos no se atemoricen con tantos warning
                           seed= PARAM$hyperparametertuning$semilla_azar
@@ -239,7 +238,7 @@ dataset[ foto_mes %in% PARAM$input$training &
 dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ training == 1L, campos_buenos, with=FALSE]),
                         label= dataset[ training == 1L, clase01 ],
                         weight=  dataset[ training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
-                        free_raw_data= FALSE  )
+                        free_raw_data= FALSE,max_bin=max_bin  )
 
 
 
