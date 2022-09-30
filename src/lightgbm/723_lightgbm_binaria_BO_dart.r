@@ -32,10 +32,10 @@ options(error = function() {
 
 #Aqui se cargan los hiperparametros
 hs <- makeParamSet( 
-         makeNumericParam("learning_rate",    lower=    0.005, upper=    0.09),
-         makeNumericParam("feature_fraction", lower=    0.25  , upper=    0.6),
-         makeIntegerParam("min_data_in_leaf", lower=    1000L   , upper=  3000L),
-         makeIntegerParam("num_leaves",       lower=   1000L   , upper=  2500L),
+         makeNumericParam("learning_rate",    lower=    0.005, upper=    0.3),
+         makeNumericParam("feature_fraction", lower=    0.2  , upper=    1.0),
+         makeIntegerParam("min_data_in_leaf", lower=    0L   , upper=  8000L),
+         makeIntegerParam("num_leaves",       lower=   16L   , upper=  2024L),
          makeIntegerParam("envios",           lower= 5000L   , upper= 15000L),
          makeIntegerParam("max_bin", lower=   31L   , upper=  255L)
          #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
@@ -122,6 +122,9 @@ EstimarGanancia_lightgbm  <- function( x )
 
   param_basicos  <- list( objective= "binary",
                           metric= "custom",
+                          boosting="dart",
+                          max_drop = 50,
+                          skip_drop =0.5,
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
