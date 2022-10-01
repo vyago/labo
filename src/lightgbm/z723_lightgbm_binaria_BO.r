@@ -37,6 +37,8 @@ hs <- makeParamSet(
          makeIntegerParam("min_data_in_leaf", lower=    1000L   , upper=  3000L),
          makeIntegerParam("num_leaves",       lower=   1000L   , upper=  2500L),
          makeIntegerParam("envios",           lower= 5000L   , upper= 15000L),
+         makeIntegerParam("lambda_l1",        lower= 0L   , upper= 100L)
+         
          #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
         )
 
@@ -44,7 +46,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7238"
+PARAM$experimento  <- "HT7239"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -124,11 +126,11 @@ EstimarGanancia_lightgbm  <- function( x )
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
-                          max_bin=108,
+                          max_bin=31,
                           verbosity= -100,
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
-                          lambda_l1= 0.0,         #por ahora, lo dejo fijo
+                          #lambda_l1= 0.0,         #por ahora, lo dejo fijo
                           lambda_l2= 0.0,            #por ahora, lo dejo fijo
                           num_iterations= 9999,   #un numero muy grande, lo limita early_stopping_rounds
                           force_row_wise= TRUE,   #para que los alumnos no se atemoricen con tantos warning
