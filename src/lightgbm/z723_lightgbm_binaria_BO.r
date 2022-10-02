@@ -37,7 +37,7 @@ hs <- makeParamSet(
          makeIntegerParam("min_data_in_leaf", lower=    1000L   , upper=  3000L),
          makeIntegerParam("num_leaves",       lower=   1000L   , upper=  2500L),
          makeIntegerParam("envios",           lower= 5000L   , upper= 15000L),
-         makeIntegerParam("lambda_l1",        lower= 0L   , upper= 100L)
+         makeIntegerParam("max_bin",lower=31,upper=255)
          
          #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
         )
@@ -46,7 +46,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7239"
+PARAM$experimento  <- "HT7241"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -126,11 +126,11 @@ EstimarGanancia_lightgbm  <- function( x )
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
-                          max_bin=31,
+                          #max_bin=31,
                           verbosity= -100,
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
-                          #lambda_l1= 0.0,         #por ahora, lo dejo fijo
+                          lambda_l1= 0.0,         #por ahora, lo dejo fijo
                           lambda_l2= 0.0,            #por ahora, lo dejo fijo
                           num_iterations= 9999,   #un numero muy grande, lo limita early_stopping_rounds
                           force_row_wise= TRUE,   #para que los alumnos no se atemoricen con tantos warning
@@ -143,6 +143,14 @@ EstimarGanancia_lightgbm  <- function( x )
   param_completo  <- c( param_basicos, param_variable, x )
 
   set.seed( PARAM$hyperparametertuning$semilla_azar )
+
+  #dejo los datos en el formato que necesita LightGBM
+ dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ training == 1L, campos_buenos, with=FALSE]),
+                        label= dataset[ training == 1L, clase01 ],
+                        weight=  dataset[ training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
+                        free_raw_data= FALSE, max_bin=PARAM$max_bin )
+
+
   modelocv  <- lgb.cv( data= dtrain,
                        eval= fganancia_logistic_lightgbm,
                        stratified= TRUE, #sobre el cross validation
@@ -192,8 +200,8 @@ EstimarGanancia_lightgbm  <- function( x )
 #Aqui empieza el programa
 
 #Aqui se debe poner la carpeta de la computadora local
-setwd("~/buckets/b1/")   #Establezco el Working Directory
-#setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
+#setwd("~/buckets/b1/")   #Establezco el Working Directory
+setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
 
 #cargo el dataset donde voy a entrenar el modelo
 dataset  <- fread( PARAM$input$dataset )
@@ -235,12 +243,6 @@ dataset[  , training := 0L ]
 dataset[ foto_mes %in% PARAM$input$training & 
           ( azar <= PARAM$trainingstrategy$undersampling | clase_ternaria %in% c( "BAJA+1", "BAJA+2" ) ),
          training := 1L ]
-
-#dejo los datos en el formato que necesita LightGBM
-dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ training == 1L, campos_buenos, with=FALSE]),
-                        label= dataset[ training == 1L, clase01 ],
-                        weight=  dataset[ training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
-                        free_raw_data= FALSE  )
 
 
 
