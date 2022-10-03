@@ -21,6 +21,7 @@ require("lightgbm")
 #paquetes necesarios para la Bayesian Optimization
 require("DiceKriging")
 require("mlrMBO")
+require("xgboost")
 
 options(error = function() { 
   traceback(20); 
@@ -36,8 +37,7 @@ hs <- makeParamSet(
          makeNumericParam("feature_fraction", lower=    0.25  , upper=    0.6),
          makeIntegerParam("min_data_in_leaf", lower=    1000L   , upper=  3000L),
          makeIntegerParam("num_leaves",       lower=   1000L   , upper=  2500L),
-         makeIntegerParam("envios",           lower= 5000L   , upper= 15000L),
-         makeIntegerParam("max_bin",lower=31,upper=255)
+         makeIntegerParam("envios",           lower= 5000L   , upper= 15000L)
          
          #makeNumericParam("drop_rate",lower=  0.2  , upper=  0.7)
         )
@@ -46,7 +46,7 @@ hs <- makeParamSet(
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM  <- list()
 
-PARAM$experimento  <- "HT7241"
+PARAM$experimento  <- "HT7242"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
@@ -54,7 +54,7 @@ PARAM$input$training      <- c( 202103 )
 PARAM$trainingstrategy$undersampling  <-  1.0   # un undersampling de 0.1  toma solo el 10% de los CONTINUA
 PARAM$trainingstrategy$semilla_azar   <- 444583  #Aqui poner la propia semilla
 
-PARAM$hyperparametertuning$iteraciones <- 400
+PARAM$hyperparametertuning$iteraciones <- 1
 PARAM$hyperparametertuning$xval_folds  <- 5
 PARAM$hyperparametertuning$POS_ganancia  <- 78000
 PARAM$hyperparametertuning$NEG_ganancia  <- -2000
@@ -109,6 +109,7 @@ fganancia_logistic_lightgbm  <- function( probs, datos)
 #esta funcion solo puede recibir los parametros que se estan optimizando
 #el resto de los parametros se pasan como variables globales, la semilla del mal ...
 
+
 EstimarGanancia_lightgbm  <- function( x )
 {
   gc()  #libero memoria
@@ -126,7 +127,7 @@ EstimarGanancia_lightgbm  <- function( x )
                           first_metric_only= TRUE,
                           boost_from_average= TRUE,
                           feature_pre_filter= FALSE,
-                          #max_bin=31,
+                          max_bin=126,
                           verbosity= -100,
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
@@ -145,10 +146,6 @@ EstimarGanancia_lightgbm  <- function( x )
   set.seed( PARAM$hyperparametertuning$semilla_azar )
 
   #dejo los datos en el formato que necesita LightGBM
- dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ training == 1L, campos_buenos, with=FALSE]),
-                        label= dataset[ training == 1L, clase01 ],
-                        weight=  dataset[ training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
-                        free_raw_data= FALSE, max_bin=PARAM$max_bin )
 
 
   modelocv  <- lgb.cv( data= dtrain,
@@ -156,7 +153,8 @@ EstimarGanancia_lightgbm  <- function( x )
                        stratified= TRUE, #sobre el cross validation
                        nfold= kfolds,    #folds del cross validation
                        param= param_completo,
-                       verbose= -100
+                       verbose= -100.,
+                       
                       )
 
   #obtengo la ganancia
@@ -233,7 +231,6 @@ if( file.exists(klog) )
 #paso la clase a binaria que tome valores {0,1}  enteros
 dataset[ foto_mes %in% PARAM$input$training, clase01 := ifelse( clase_ternaria=="CONTINUA", 0L, 1L) ]
 
-
 #los campos que se van a utilizar
 campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01", "azar", "training" ) )
 
@@ -243,6 +240,33 @@ dataset[  , training := 0L ]
 dataset[ foto_mes %in% PARAM$input$training & 
           ( azar <= PARAM$trainingstrategy$undersampling | clase_ternaria %in% c( "BAJA+1", "BAJA+2" ) ),
          training := 1L ]
+
+dtrain_xg <- xgb.DMatrix(
+        data = data.matrix(dataset[ training == 1L,..campos_buenos]),
+        label= dataset[ training == 1L, clase01 ], missing = NA)
+
+param_fe <- list(
+                colsample_bynode = 0.8,
+                learning_rate = 1,
+                max_depth = 3, # <--- IMPORTANTE CAMBIAR
+                num_parallel_tree = 10, # <--- IMPORTANTE CAMBIAR
+                subsample = 0.8,
+                objective = "binary:logistic"
+            )
+
+xgb_model <- xgb.train(params = param_fe, data = dtrain_xg, nrounds = 1)
+
+
+
+# Veamos un paso a paso
+new_features <- xgb.create.features(model = xgb_model, data.matrix(dataset[ training == 1L,..campos_buenos]))
+
+
+
+dtrain  <- lgb.Dataset( data= data.matrix( new_features),
+                        label=  dataset[ training == 1L, clase01 ] ,
+                        weight=  dataset[training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
+                        free_raw_data= FALSE )
 
 
 
