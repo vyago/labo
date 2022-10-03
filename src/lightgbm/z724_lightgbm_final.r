@@ -11,24 +11,24 @@ gc()             #garbage collection
 
 require("data.table")
 require("lightgbm")
+require("xgboost")
 
 
 #defino los parametros de la corrida, en una lista, la variable global  PARAM
 #  muy pronto esto se leera desde un archivo formato .yaml
 PARAM <- list()
-PARAM$experimento  <- "KA7239_maxbin255"
+PARAM$experimento  <- "KA7242"
 
 PARAM$input$dataset       <- "./datasets/competencia2_2022.csv.gz"
 PARAM$input$training      <- c( 202103 )
 PARAM$input$future        <- c( 202105 )
 
-PARAM$finalmodel$max_bin           <-     255
-PARAM$finalmodel$learning_rate     <-      0.00504   #0.0142501265
-PARAM$finalmodel$num_iterations    <-    1511  #615
-PARAM$finalmodel$num_leaves        <-   2364  #784
-PARAM$finalmodel$min_data_in_leaf  <-   1093
-PARAM$finalmodel$feature_fraction  <-   0.2757
-PARAM$finalmodel$lambda_l1 <- 4 #0.8382482539
+PARAM$finalmodel$max_bin           <-     342
+PARAM$finalmodel$learning_rate     <-      0.012   #0.0142501265
+PARAM$finalmodel$num_iterations    <-    1297  #615
+PARAM$finalmodel$num_leaves        <-   1773  #784
+PARAM$finalmodel$min_data_in_leaf  <-   1000  #5628
+PARAM$finalmodel$feature_fraction  <-   0.2513  #0.8382482539
 PARAM$finalmodel$semilla           <- 444583
 
 #------------------------------------------------------------------------------
@@ -68,6 +68,28 @@ dir.create( paste0("./exp/", PARAM$experimento, "/" ), showWarnings = FALSE )
 setwd( paste0("./exp/", PARAM$experimento, "/" ) )   #Establezco el Working Directory DEL EXPERIMENTO
 
 
+dtrain_xg <- xgb.DMatrix(
+        data = data.matrix(dataset[ train == 1L,..campos_buenos]),
+        label= dataset[ train == 1L, clase01 ], missing = NA)
+
+param_fe <- list(
+                colsample_bynode = 0.8,
+                learning_rate = 1,
+                max_depth = 3, # <--- IMPORTANTE CAMBIAR
+                num_parallel_tree = 10, # <--- IMPORTANTE CAMBIAR
+                subsample = 0.8,
+                objective = "binary:logistic"
+            )
+
+xgb_model <- xgb.train(params = param_fe, data = dtrain_xg, nrounds = 1)
+
+
+
+# Veamos un paso a paso
+new_features <- xgb.create.features(model = xgb_model, data.matrix(dataset[ train == 1L,..campos_buenos]))
+
+
+
 
 #dejo los datos en el formato que necesita LightGBM
 dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ train==1L, campos_buenos, with=FALSE]),
@@ -83,7 +105,6 @@ modelo  <- lgb.train( data= dtrain,
                                    num_leaves=         PARAM$finalmodel$num_leaves,
                                    min_data_in_leaf=   PARAM$finalmodel$min_data_in_leaf,
                                    feature_fraction=   PARAM$finalmodel$feature_fraction,
-                                   lambda_l1 = PARAM$finalmodel$lambda_l1,
                                    seed=               PARAM$finalmodel$semilla
                                   )
                     )
@@ -122,7 +143,7 @@ setorder( tb_entrega, -prob )
 
 #genero archivos con los  "envios" mejores
 #deben subirse "inteligentemente" a Kaggle para no malgastar submits
-cortes <- seq( 5000, 12000, by=500 )
+cortes <- seq( 5000, 15000, by=500 )
 for( envios  in  cortes )
 {
   tb_entrega[  , Predicted := 0L ]

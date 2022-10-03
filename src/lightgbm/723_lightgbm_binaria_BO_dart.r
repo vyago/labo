@@ -243,7 +243,7 @@ dtrain  <- lgb.Dataset( data= data.matrix(  dataset[ training == 1L, campos_buen
                         label= dataset[ training == 1L, clase01 ],
                         weight=  dataset[ training == 1L, ifelse( clase_ternaria=="BAJA+2", 1.0000002, ifelse( clase_ternaria=="BAJA+1",  1.0000001, 1.0) )],
                         free_raw_data= FALSE  )
-
+colnames(dtrain)
 
 
 #Aqui comienza la configuracion de la Bayesian Optimization
