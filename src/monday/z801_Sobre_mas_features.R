@@ -19,7 +19,7 @@ require("lightgbm")
 require("xgboost")
 
 # Poner la carpeta de la materia de SU computadora local
-setwd("/home/aleb/dmeyf2022")
+setwd("C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF")  # para correr en local
 # Poner sus semillas
 semillas <- c(17, 19, 23, 29, 31)
 
