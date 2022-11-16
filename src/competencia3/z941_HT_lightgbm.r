@@ -19,9 +19,9 @@ require("mlrMBO")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "HT9412"
+PARAM$experimento <- "HT94140"
 
-PARAM$exp_input  <- "TS9313"
+PARAM$exp_input  <- "TS93140"
 # FIN Parametros del script
 
 
@@ -33,7 +33,7 @@ options(error = function() {
 })
 #------------------------------------------------------------------------------
 
-ksemilla  <- 102191
+ksemilla  <- 102193
 
 kcrossvalidation_folds  <- 5  #En caso que se haga cross validation, se usa esta cantidad de folds
 
@@ -79,7 +79,7 @@ hs <- makeParamSet(
 
 
 #si usted es ambicioso, y tiene paciencia, podria subir este valor a 100
-kBO_iteraciones  <- 50  #iteraciones de la Optimizacion Bayesiana
+kBO_iteraciones  <- 100  #iteraciones de la Optimizacion Bayesiana
 
 #------------------------------------------------------------------------------
 #graba a un archivo los componentes de lista

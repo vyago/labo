@@ -14,19 +14,19 @@ require("data.table")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "TS9313"
+PARAM$experimento <- "TS93140"
 
-PARAM$exp_input  <- "FE9252"
+PARAM$exp_input  <- "FE92540"
 
 PARAM$future       <- c( 202107 )
 
-PARAM$final_train  <- c( 202102,202101,202007,202008,202103, 202104, 202105 )
+PARAM$final_train  <- c(202012,202011,202102,202101,202103,201905,202906,201907,201908,201909,201910,201911,201912)
 
-PARAM$train$training     <- c(202102,202101,202103, 202104, 202105)
-PARAM$train$validation   <- c(202102,202101,202103, 202104, 202105)
-PARAM$train$testing      <- c(202102,202101,202103, 202104, 202105)
-PARAM$train$undersampling  <- 1.0   # 1.0 significa NO undersampling ,  0.1  es quedarse con el 10% de los CONTINUA
-PARAM$train$semilla  <- 102191
+PARAM$train$training     <- c(202012,202011,202102,202101,202103,201905,202906,201907,201908,201909,201910,201911,201912)
+PARAM$train$validation   <- c(202104)
+PARAM$train$testing      <- c(202105)
+PARAM$train$undersampling  <- 0.4   # 1.0 significa NO undersampling ,  0.1  es quedarse con el 10% de los CONTINUA
+PARAM$train$semilla  <- 102193
 # FIN Parametros del script
 
 
