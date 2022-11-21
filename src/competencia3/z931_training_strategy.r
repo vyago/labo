@@ -14,11 +14,11 @@ require("data.table")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento <- "TS93142"
+PARAM$experimento <- "TS93145"
 
 PARAM$exp_input  <- "FE92542"
 
-PARAM$future       <- c( 202109 )
+PARAM$future       <- c( 202107 )
 
 PARAM$final_train  <- c(202012,202011,202102,202101,202103,201905,201906,201907,201908,201909,201910,201911,201912,202104,202105)
 
