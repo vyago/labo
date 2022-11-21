@@ -14,11 +14,11 @@ require("lightgbm")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZZ100041"
-PARAM$exp_input  <- "HT94141"
+PARAM$experimento  <- "ZZ100042"
+PARAM$exp_input  <- "HT94143"
 
 PARAM$modelos  <- 1   #posición de los parámetros del modelo a elegir
-PARAM$cantidad_modelos <- 50 #cantidad de modelos que quiero usar para el semillerio
+PARAM$cantidad_modelos <- 60 #cantidad de modelos que quiero usar para el semillerio
 # FIN Parametros del script
 
 ksemilla  <- 102191
@@ -160,11 +160,9 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
 
   #borro y limpio la memoria para la vuelta siguiente del for
   rm( tb_prediccion )
-  rm( tb_importancia )
   rm( modelo_final)
   rm( parametros )
   rm( dtrain )
-  rm(alm_predicciones)
   gc()
 }
 
