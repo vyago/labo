@@ -21,7 +21,7 @@ require("mlrMBO")
 PARAM  <- list()
 PARAM$experimento <- "HT94144"
 
-PARAM$exp_input  <- "TS93143"
+PARAM$exp_input  <- "TS93142"
 # FIN Parametros del script
 
 

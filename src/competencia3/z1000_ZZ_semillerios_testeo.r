@@ -33,7 +33,7 @@ options(error = function() {
 #------------------------------------------------------------------------------
 #Aqui empieza el programa
 
-base_dir <- "~/buckets/b1/"
+base_dir <- "C:/Users/vyago/Desktop/Maestría Ciencias de Datos/07-DMEYF/"
 
 #creo la carpeta donde va el experimento
 dir.create( paste0( base_dir, "exp/", PARAM$experimento, "/"), showWarnings = FALSE )
@@ -45,8 +45,8 @@ tb_log  <- fread( arch_log )
 setorder( tb_log, -ganancia )
 
 #leo el nombre del expermento de la Training Strategy
-arch_TS  <- paste0( base_dir, "exp/", PARAM$exp_input, "/TrainingStrategy.txt" )
-TS  <- readLines( arch_TS, warn=FALSE )
+#arch_TS  <- paste0( base_dir, "exp/", PARAM$exp_input, "/TrainingStrategy.txt" )
+TS  <- "TS1"
 
 #leo el dataset donde voy a entrenar el modelo final
 arch_dataset  <- paste0( base_dir, "exp/", TS, "/dataset_train_final.csv.gz" )
@@ -160,10 +160,10 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
 
   #borro y limpio la memoria para la vuelta siguiente del for
   try(rm( tb_prediccion ))
-  try(rm(alm_predicciones))
   rm( modelo_final)
   rm( parametros )
   rm( dtrain )
+  try(rm(alm_predicciones))
   gc()
 }
 

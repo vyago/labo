@@ -42,17 +42,18 @@ setwd(paste0( base_dir, "exp/", PARAM$experimento, "/"))   #Establezco el Workin
 arch_pred <- paste0(base_dir,"exp/",PARAM$exp_input,"/pred_ensemble.csv")
 predicciones <- fread(arch_pred)
 
-ensamblado <- function (tipo){
-  if(tipo=="mediana"){
+
+if(tipo=="mediana"){
     predicciones[,prob:= apply(predicciones, 1, median)]
   }
-  if(tipo="rankeo"){
+if(tipo="rankeo"){
+
     modelos <- names(predicciones)[-c(1:2)]
     predicciones[,(modelos):=lapply(.SD,function(x){rank(x,ties.method = "random")}),.SD=modelos]
     predicciones[,prob:=prob:= apply(predicciones, 1, median)]
 
   }
-}
+
 
 
 
