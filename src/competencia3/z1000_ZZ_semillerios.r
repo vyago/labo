@@ -93,7 +93,11 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
 
   parametros  <- as.list( copy( tb_log[ PARAM$modelos ] ) )
   iteracion_bayesiana  <- parametros$iteracion_bayesiana
-
+  if( i<=2){
+        fwrite(parametros,
+          file= "parametros.csv",
+          sep= "\t" )
+  }
 
 
   #creo CADA VEZ el dataset de lightgbm
