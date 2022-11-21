@@ -91,7 +91,7 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
 {
 
 
-  parametros  <- as.list( copy( tb_log[ PARAM$modelo ] ) )
+  parametros  <- as.list( copy( tb_log[ PARAM$modelos ] ) )
   iteracion_bayesiana  <- parametros$iteracion_bayesiana
 
 
@@ -136,8 +136,7 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
     tb_prediccion[ , eval(seed_prediccion) := prediccion ]
 
 
-    nom_pred  <- paste0( "pred_ensemble"
-                       ".csv"  )
+    nom_pred  <- "pred_ensemble.csv"  
 
     fwrite( tb_prediccion,
           file= nom_pred,
@@ -146,8 +145,7 @@ for( i in  ult_modelo:PARAM$cantidad_modelos )
 
     seed_prediccion <- quote(paste0("mod-",i))
     alm_predicciones[,eval(seed_prediccion) := prediccion]
-    nom_pred  <- paste0( "pred_ensemble"
-                       ".csv"  )
+    nom_pred  <- "pred_ensemble.csv"  
 
     fwrite(alm_predicciones,
           file= nom_pred,
