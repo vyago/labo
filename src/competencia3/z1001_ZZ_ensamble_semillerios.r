@@ -14,10 +14,10 @@ require("lightgbm")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZE100141"
-PARAM$exp_input  <- "ZZ100041"
+PARAM$experimento  <- "ZE100142-promedio"
+PARAM$exp_input  <- "ZZ100042"
 
-PARAM$ensemble  <- 'mediana'  # acá puede ir mediana o rankeo
+PARAM$ensemble  <- 'rankeo'  # acá puede ir mediana,rankeo o promedio
 # FIN Parametros del script
 
 
@@ -42,16 +42,27 @@ setwd(paste0( base_dir, "exp/", PARAM$experimento, "/"))   #Establezco el Workin
 arch_pred <- paste0(base_dir,"exp/",PARAM$exp_input,"/pred_ensemble.csv")
 predicciones <- fread(arch_pred)
 
-
+tipo <- PARAM$ensemble
 if(tipo=="mediana"){
-    predicciones[,prob:= apply(predicciones, 1, median)]
-  }
-if(tipo="rankeo"){
+    predicciones[,prob:= apply(predicciones[,-c("numero_de_cliente","foto_mes"),with=FALSE], 1, median)]
+  fwrite(predicciones[,list(numero_de_cliente,prob)],
+         file='predicciones.csv',
+         sep=",")
+}
+if(tipo=="promedio"){
+  predicciones[,prob:= apply(predicciones[,-c("numero_de_cliente","foto_mes"),with=FALSE], 1, mean)]
+  fwrite(predicciones[,list(numero_de_cliente,prob)],
+         file='predicciones.csv',
+         sep=",")
+}
+if(tipo=="rankeo"){
 
     modelos <- names(predicciones)[-c(1:2)]
     predicciones[,(modelos):=lapply(.SD,function(x){rank(x,ties.method = "random")}),.SD=modelos]
-    predicciones[,prob:=prob:= apply(predicciones, 1, median)]
-
+    predicciones[,prob:= apply(predicciones[,-c("numero_de_cliente","foto_mes"),with=FALSE], 1, median)]
+    fwrite(predicciones[,list(numero_de_cliente,prob)],
+                        file='predicciones.csv',
+                        sep=",")
   }
 
 
@@ -85,11 +96,10 @@ if(tipo="rankeo"){
 
 
   #borro y limpio la memoria para la vuelta siguiente del for
+  rm( tipo )
   rm( predicciones )
-  rm( tb_importancia )
-  rm( modelo_final)
-  rm( parametros )
-  rm( dtrain )
+  rm( arch_pred)
+  rm(PARAM)
   gc()
-}
+
 
