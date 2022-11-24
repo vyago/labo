@@ -14,10 +14,10 @@ require("lightgbm")
 
 #Parametros del script
 PARAM  <- list()
-PARAM$experimento  <- "ZE100142-promedio"
-PARAM$exp_input  <- "ZZ100042"
+PARAM$experimento  <- "ZE100143"
+PARAM$exp_input  <- "ZZ100043"
 
-PARAM$ensemble  <- 'rankeo'  # acá puede ir mediana,rankeo o promedio
+PARAM$ensemble  <- 'promedio'  # acá puede ir mediana,rankeo o promedio
 # FIN Parametros del script
 
 
@@ -72,8 +72,8 @@ if(tipo=="rankeo"){
 
   #genero los archivos para Kaggle
   cortes  <- seq( from=  10000,
-                  to=   16000,
-                  by=     500 )
+                  to=   11000,
+                  by=     100 )
 
 
   setorder( predicciones, -prob )
